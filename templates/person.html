@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Emergency Info - {{ p["name"] }}</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{
+      font-family:Arial,Helvetica,sans-serif;
+      padding:18px;
+      line-height:1.4;
+      background:#fafafa;
+    }
+    .card{
+      border:1px solid #ccc;
+      padding:16px;
+      border-radius:8px;
+      max-width:540px;
+      margin:16px auto;
+      background:#fff;
+      box-shadow:0 0 8px rgba(0,0,0,0.1);
+    }
+    h1{margin:0 0 8px 0}
+    .label{font-weight:600}
+
+    .qr-block{
+      text-align:center;
+      margin-top:16px;
+      padding-top:12px;
+      border-top:1px solid #eee;
+    }
+    .qr-block img{
+      max-width:220px;
+      margin-top:8px;
+      border-radius:12px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    }
+    .qr-note{
+      font-size:0.85rem;
+      color:#666;
+      margin-top:6px;
+    }
+    .print-btn{
+      margin-top:10px;
+      padding:8px 14px;
+      border:none;
+      border-radius:8px;
+      background:#1e90ff;
+      color:#fff;
+      font-size:0.9rem;
+      cursor:pointer;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      .qr-only, .qr-only * {
+        visibility: visible !important;
+      }
+      .qr-only {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+        text-align: center;
+        padding-top: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card" role="main" aria-labelledby="title">
+    <h1 id="title">Emergency information</h1>
+
+    <p><span class="label">Name and Surname:</span> {{ p["name"] }}</p>
+    <p><span class="label">Blood type:</span> {{ p["blood_type"] or "Unknown" }}</p>
+    <p><span class="label">Allergies:</span> {{ p["allergies"] or "None listed" }}</p>
+    <p><span class="label">Notes:</span> {{ p["notes"] or "-" }}</p>
+
+    <hr/>
+
+    <p><span class="label">Emergency contact:</span><br/>
+       {{ p["emergency_contact_name"] or "-" }} — {{ p["emergency_contact_phone"] or "-" }}</p>
+
+    {% if qr_image %}
+    <div class="qr-block">
+      <div class="label">QR code for this patient:</div>
+
+      <div class="qr-only">
+        <img src="{{ qr_image }}" alt="QR code for {{ p['name'] }}">
+      </div>
+
+      <div class="qr-note">Scan this code to open this page in emergencies.</div>
+
+      <button class="print-btn" onclick="window.print()">Print QR</button>
+    </div>
+    {% endif %}
+
+  </div>
+</body>
+</html>

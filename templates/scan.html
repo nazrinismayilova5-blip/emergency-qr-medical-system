@@ -1,0 +1,250 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Scan Patient QR</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root{
+      --bg:#f0f4f8;
+      --card:#ffffff;
+      --pink:#ff69b4;
+      --blue:#1e90ff;
+      --muted:#666;
+    }
+
+    html,body{height:100%;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg)}
+    .page {
+      min-height:100vh;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:36px 18px;
+      box-sizing:border-box;
+    }
+
+    .container {
+      width:100%;
+      max-width:720px;
+      background:var(--card);
+      border-radius:20px;
+      padding:28px;
+      box-shadow:0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      text-align:center;
+      margin:0 0 14px 0;
+      color:var(--pink);
+      font-size:1.6rem;
+    }
+
+    .lead {
+      text-align:center;
+      color:var(--muted);
+      margin:0 0 18px 0;
+      font-size:0.95rem;
+    }
+
+    #reader {
+      width:100%;
+      height:360px;
+      border-radius:12px;
+      overflow:hidden;
+      background:#000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      box-shadow:0 6px 18px rgba(0,0,0,0.06);
+    }
+
+    .controls {
+      margin-top:16px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+
+    select, input[type=file] {
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid #ddd;
+      background:#fff;
+      font-size:0.95rem;
+    }
+
+    .btn {
+      padding:10px 16px;
+      border-radius:12px;
+      border:none;
+      cursor:pointer;
+      font-weight:700;
+      font-size:0.95rem;
+      color:#fff;
+      background:linear-gradient(90deg,var(--pink),var(--blue));
+      box-shadow:0 6px 14px rgba(30,144,255,0.12);
+    }
+
+    .btn.secondary {
+      background:#1e90ff;
+      padding:9px 14px;
+      border-radius:10px;
+      font-weight:600;
+    }
+
+    .status {
+      margin-top:12px;
+      text-align:center;
+      color:var(--muted);
+      font-size:0.95rem;
+    }
+
+    .note {
+      margin-top:10px;
+      font-size:0.85rem;
+      color:#777;
+      text-align:center;
+    }
+
+    @media (max-width:520px){
+      #reader { height:300px; }
+      .container{padding:18px}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="container" role="main" aria-labelledby="scanTitle">
+      <h1 id="scanTitle">Scan patient QR</h1>
+      <p class="lead">Allow camera access and point it at a QR code. If camera isn't available image can be uploaded.</p>
+
+      <div id="reader">Camera feed will show here</div>
+
+      <div class="controls" aria-hidden="false">
+        <label for="cameraSelect" style="display:none">Camera</label>
+        <select id="cameraSelect" aria-label="Camera selection"></select>
+
+        <button id="startBtn" class="btn" type="button">Start</button>
+        <button id="stopBtn" class="btn secondary" type="button" disabled>Stop</button>
+
+        <input id="fileInput" type="file" accept="image/*" aria-label="Upload QR image">
+      </div>
+
+      <div class="status" id="status">Waiting to start scanner...</div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    const statusEl = document.getElementById('status');
+    const cameraSelect = document.getElementById('cameraSelect');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const fileInput = document.getElementById('fileInput');
+    const readerId = "reader";
+
+    let currentCameraId = null;
+    let html5QrcodeScanner = null;
+
+    function log(msg){ statusEl.textContent = msg; }
+
+    function handleDecodedText(decodedText){
+      try {
+        const url = new URL(decodedText);
+        if (url.origin === location.origin) {
+          window.location.href = url.href;
+          return;
+        }
+      } catch(e){ }
+
+      const tokenMatch = decodedText.match(/person\/([A-Za-z0-9\-_\.]+)/) || decodedText.match(/^([A-Za-z0-9\-_\.]+)$/);
+      if (tokenMatch) {
+        const token = tokenMatch[1];
+        window.location.href = `/person/${encodeURIComponent(token)}`;
+      } else {
+        alert("Scanned data: " + decodedText);
+      }
+    }
+
+    function onScanSuccess(decodedText, decodedResult){
+      log("QR found");
+      if (!html5QrcodeScanner) return handleDecodedText(decodedText);
+      html5QrcodeScanner.stop().then(() => handleDecodedText(decodedText)).catch(() => handleDecodedText(decodedText));
+    }
+
+    function onScanError(err){
+
+    }
+
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length) {
+        cameraSelect.innerHTML = "";
+        cameras.forEach(cam => {
+          const opt = document.createElement('option');
+          opt.value = cam.id;
+          opt.textContent = cam.label || cam.id;
+          cameraSelect.appendChild(opt);
+        });
+        currentCameraId = cameras[0].id;
+        cameraSelect.value = currentCameraId;
+        log("Camera ready. Choose camera and press Start.");
+      } else {
+        log("No camera found. Use file upload to scan an image.");
+      }
+    }).catch(err => {
+      log("Could not list cameras: " + err);
+    });
+
+    cameraSelect.addEventListener('change', () => currentCameraId = cameraSelect.value);
+
+    startBtn.addEventListener('click', () => {
+      if (!currentCameraId) { log("No camera selected."); return; }
+      html5QrcodeScanner = new Html5Qrcode(readerId);
+      const config = { fps: 10, qrbox: { width: 300, height: 300 } };
+      log("Starting camera...");
+      html5QrcodeScanner.start(
+        { deviceId: { exact: currentCameraId } },
+        config,
+        onScanSuccess,
+        onScanError
+      ).then(() => {
+        log("Scanning... point the camera to the QR.");
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      }).catch(err => {
+        log("Could not start scanner: " + err);
+      });
+    });
+
+    stopBtn.addEventListener('click', () => {
+      if (!html5QrcodeScanner) return;
+      html5QrcodeScanner.stop().then(() => {
+        log("Scanner stopped.");
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        html5QrcodeScanner.clear();
+        html5QrcodeScanner = null;
+      }).catch(err => log("Error stopping scanner: "+err));
+    });
+
+    fileInput.addEventListener('change', (ev) => {
+      const file = ev.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function() {
+        const dataUrl = reader.result;
+        const scanner = new Html5Qrcode(readerId + "_tmp");
+        scanner.scanImage(dataUrl, true).then(decodedText => {
+          handleDecodedText(decodedText);
+        }).catch(err => {
+          alert("No QR found in image: " + err);
+        }).finally(() => scanner.clear());
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>

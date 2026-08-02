@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Emergency Tags - Admin</title>
+  <style>
+    body { font-family: Arial; padding: 18px; background: #f0f4f8; }
+
+    header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:16px;
+    }
+
+    h1 { margin:0; color:#333; }
+
+    .actions {
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .actions a.button {
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: white;
+      text-decoration: none;
+      font-weight:600;
+      background: linear-gradient(90deg,#ff69b4,#1e90ff);
+    }
+
+    li {
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      background: #ffffff;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    a { text-decoration: none; color: #007BFF; }
+
+    button {
+      padding: 6px 12px;
+      font-size: 0.9em;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      color: white;
+    }
+
+    button.status { background: #74d0a8; }
+    button.edit { background: #7abfff; }
+    button.hide { background: #ff9aa2; }
+    button.unhide { background: #6ad3ff; }
+
+    .add-link {
+      display: inline-block;
+      margin-bottom: 15px;
+      padding: 6px 12px;
+      background: #7abfff;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+    .add-link:hover { background: #5aa0e0; }
+
+    .flash {
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      color: white;
+      background: linear-gradient(90deg, #ff7eb3, #7abfff);
+    }
+
+    .muted { color:#666; font-size:0.9em; margin-top:4px; }
+
+    nav.pager { margin:16px 0; text-align:center; }
+    nav.pager a { margin:0 6px; text-decoration:none; color:#1e90ff; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div>
+      <h1>Registered People</h1>
+      <div class="muted">Manage patients & QR codes</div>
+    </div>
+
+    <div class="actions">
+      <a class="button" href="{{ url_for('activity') }}">Activity</a>
+      <a class="button" href="{{ url_for('scan') }}">Scan</a>
+      <a class="button" href="{{ url_for('add_person') }}">Add</a>
+      <a class="button" href="{{ url_for('logout') }}" style="background:#ff4d4f;">Logout</a>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="flash">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div style="margin-bottom:12px;">
+    {% if show_hidden %}
+      <a class="add-link" href="{{ url_for('index') }}">Show visible patients</a>
+    {% else %}
+      <a class="add-link" href="{{ url_for('index', show_hidden=1) }}">Show hidden patients</a>
+    {% endif %}
+  </div>
+
+  <ul>
+    {% for person in people %}
+      <li>
+        <div style="flex:1">
+          <a href="{{ url_for('person', token=person['token']) }}">{{ person['name'] }}</a>
+          <div style="font-size:0.9em;color:#666;margin-top:4px">
+            token: {{ person['token'] }}
+          </div>
+          <div style="font-size:0.85em;margin-top:4px;">
+            Status:
+            {% if person['in_hospital'] %}
+              <span style="color:green;font-weight:600;">In hospital</span>
+            {% else %}
+              <span style="color:#999;">Left hospital</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div style="display:flex;gap:6px;align-items:center;">
+          <form action="{{ url_for('toggle_status', token=person['token']) }}?page={{ page }}{% if show_hidden %}&show_hidden=1{% endif %}" method="post" style="margin:0;">
+            <button class="status" type="submit">
+              {% if person['in_hospital'] %}Mark as left{% else %}Mark as in hospital{% endif %}
+            </button>
+          </form>
+
+          <form action="{{ url_for('edit_person', token=person['token']) }}" method="get" style="margin:0;">
+            <button class="edit" type="submit">Edit</button>
+          </form>
+
+          {% if person['hidden'] %}
+            {% if show_hidden %}
+              <form action="{{ url_for('unhide_person', token=person['token']) }}?page={{ page }}" method="post" style="margin:0;">
+                <button class="unhide" type="submit">Unhide</button>
+              </form>
+            {% endif %}
+          {% else %}
+            <form action="{{ url_for('hide_person', token=person['token']) }}?page={{ page }}{% if show_hidden %}&show_hidden=1{% endif %}" method="post" style="margin:0;">
+              <button class="hide" type="submit">Hide</button>
+            </form>
+          {% endif %}
+        </div>
+      </li>
+    {% else %}
+      <li>No people yet. Use the Add Patient page.</li>
+    {% endfor %}
+  </ul>
+
+<nav class="pager" aria-label="Page navigation">
+  <div>
+    {% if page > 1 %}
+      <a href="{{ url_for('index', page=page-1, show_hidden=1 if show_hidden else None) }}">« Prev</a>
+    {% endif %}
+    Page {{ page }} of {{ total_pages }}
+    {% if page < total_pages %}
+      <a href="{{ url_for('index', page=page+1, show_hidden=1 if show_hidden else None) }}">Next »</a>
+    {% endif %}
+  </div>
+
+  <div style="margin-top:8px;">
+    {% for pnum in range(1, total_pages + 1) %}
+      {% if pnum == page %}
+        <strong>{{ pnum }}</strong>
+      {% else %}
+        <a href="{{ url_for('index', page=pnum, show_hidden=1 if show_hidden else None) }}">{{ pnum }}</a>
+      {% endif %}
+    {% endfor %}
+  </div>
+</nav>
+
+</body>
+</html>

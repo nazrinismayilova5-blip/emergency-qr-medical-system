@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Edit Patient</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .container {
+      background: #ffffff;
+      margin: 40px 0;
+      padding: 30px 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+    h1 {
+      text-align: center;
+      color: #1e90ff;
+      margin-bottom: 30px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      margin-top: 5px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    input:focus, textarea:focus {
+      border-color: #1e90ff;
+      outline: none;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px 18px;
+      width: 100%;
+      background: linear-gradient(90deg, #ff69b4, #1e90ff);
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+    button:hover { opacity: 0.9; }
+    a.back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: #1e90ff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Edit patient</h1>
+
+    <form method="post">
+      <label>Name</label>
+      <input name="name" required value="{{ p['name'] }}">
+
+      <label>Blood Type</label>
+      <input name="blood" value="{{ p['blood_type'] or '' }}">
+
+      <label>Allergies</label>
+      <input name="allergies" value="{{ p['allergies'] or '' }}">
+
+      <label>Notes</label>
+      <textarea name="notes">{{ p['notes'] or '' }}</textarea>
+
+      <label>Emergency Contact Name</label>
+      <input name="contact_name" value="{{ p['emergency_contact_name'] or '' }}">
+
+      <label>Emergency Contact Phone</label>
+      <input name="contact_phone" value="{{ p['emergency_contact_phone'] or '' }}">
+
+      <button type="submit">Save changes</button>
+    </form>
+
+    <a href="{{ url_for('index') }}" class="back-link">Back to list</a>
+  </div>
+</body>
+</html>

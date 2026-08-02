@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Login</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #ff9acb, #7abfff);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .card {
+      background: #ffffffdd;
+      backdrop-filter: blur(10px);
+      padding: 40px 50px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      width: 100%;
+      max-width: 380px;
+      animation: fadein 0.4s ease;
+    }
+
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 { text-align: center; margin-top: 0; margin-bottom: 25px; color: #ff69b4; font-size: 1.8rem; }
+
+    label { display: block; margin-bottom: 6px; font-weight: bold; color: #333; }
+    input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #bbb; font-size: 1rem; margin-bottom: 15px; transition: border 0.3s; }
+    input:focus { border-color: #1e90ff; outline: none; }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(90deg, #ff69b4, #1e90ff);
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: opacity 0.3s;
+    }
+    button:hover { opacity: 0.9; }
+
+    .flash { padding: 12px; margin-bottom: 12px; text-align: center; border-radius: 10px; background: linear-gradient(90deg, #ff7eb3, #7abfff); color: #fff; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Admin Login</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="flash">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="post">
+      <input type="hidden" name="next" value="{{ request.args.get('next','') }}">
+      <label>Username</label>
+      <input name="username" required>
+      <label>Password</label>
+      <input type="password" name="password" required>
+      <button type="submit">Log In</button>
+    </form>
+  </div>
+</body>
+</html>
+
